@@ -26,6 +26,7 @@ LOG_FILE="/tmp/claudia-install.log"
 # Default values
 DEFAULT_PORT=3000
 DEFAULT_HOST="0.0.0.0"
+DEFAULT_DOMAIN=""
 
 # Functions
 log() {
@@ -353,6 +354,115 @@ EOF
     success "Claude CLI configured"
 }
 
+# Configure domain and SSL
+configure_domain() {
+    log "Configuring domain and SSL..."
+
+    echo -e "${BLUE}[DOMAIN CONFIGURATION]${NC}"
+    echo "Enter your domain name (e.g., claudia.example.com)"
+    echo "Leave empty to skip domain setup."
+    echo
+
+    read -p "Domain name: " DOMAIN
+    if [ -z "$DOMAIN" ]; then
+        warn "Skipping domain configuration"
+        return
+    fi
+
+    # Check if nginx is available
+    if ! command -v nginx &> /dev/null && ! command -v nginx &> /dev/null; then
+        log "Installing nginx..."
+        case $PKG_MANAGER in
+            apt-get)
+                run_as_sudo apt-get install -y nginx certbot python3-certbot-nginx
+                ;;
+            dnf)
+                run_as_sudo dnf install -y nginx certbot python3-certbot-nginx
+                ;;
+            pacman)
+                run_as_sudo pacman -Sy --noconfirm nginx certbot
+                ;;
+            apk)
+                run_as_sudo apk add --no-cache nginx certbot
+                ;;
+        esac
+    fi
+
+    # Create nginx configuration
+    log "Creating nginx configuration..."
+    NGINX_CONF="/etc/nginx/sites-available/claudia-server"
+    NGINX_ENABLED="/etc/nginx/sites-enabled/claudia-server"
+
+    cat > /tmp/claudia-nginx.conf << EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    # Claudia API Server
+    location / {
+        proxy_pass http://127.0.0.1:$PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_read_timeout 86400;
+    }
+
+    # WebSocket support
+    location /ws {
+        proxy_pass http://127.0.0.1:$PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_read_timeout 86400;
+    }
+}
+EOF
+
+    run_as_sudo cp /tmp/claudia-nginx.conf "$NGINX_CONF"
+    run_as_sudo ln -sf "$NGINX_CONF" "$NGINX_ENABLED" 2>/dev/null || true
+
+    # Remove default nginx site
+    if [ -f /etc/nginx/sites-enabled/default ]; then
+        run_as_sudo rm -f /etc/nginx/sites-enabled/default
+    fi
+
+    # Test nginx configuration
+    if run_as_sudo nginx -t; then
+        run_as_sudo systemctl reload nginx
+        success "Nginx configured for domain $DOMAIN"
+    else
+        error "Nginx configuration test failed"
+    fi
+
+    # Request SSL certificate
+    echo
+    read -p "Do you want to configure SSL with Let's Encrypt? [y/N]: " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if command -v certbot &> /dev/null; then
+            log "Requesting SSL certificate..."
+            run_as_sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "admin@$DOMAIN" 2>&1 | tee -a "$LOG_FILE" \
+                || warn "SSL certificate request failed. You can run 'certbot --nginx -d $DOMAIN' manually."
+        else
+            warn "Certbot not installed. Run 'certbot --nginx -d $DOMAIN' manually after installation."
+        fi
+    fi
+
+    success "Domain configuration complete"
+    echo
+    echo "Your Claudia Server is now accessible at:"
+    echo -e "  ${BLUE}https://$DOMAIN${NC}"
+    echo
+}
+
 # Build Claudia Server
 build_claudia_server() {
     log "Building Claudia Server..."
@@ -475,6 +585,9 @@ print_summary() {
     echo "  - Config directory: $CLAUDIA_DIR"
     echo "  - Port: ${PORT:-$DEFAULT_PORT}"
     echo "  - Host: ${HOST:-$DEFAULT_HOST}"
+    if [ -n "$DOMAIN" ]; then
+    echo "  - Domain: $DOMAIN"
+    fi
     echo
     echo "To start the server:"
     if command -v systemctl &> /dev/null && systemctl is-active --quiet claudia-server 2>/dev/null; then
@@ -517,6 +630,10 @@ main() {
                 INSTALL_DIR="$2"
                 shift 2
                 ;;
+            --domain)
+                DOMAIN="$2"
+                shift 2
+                ;;
             --skip-deps)
                 SKIP_DEPS=true
                 shift
@@ -527,6 +644,7 @@ main() {
                 echo "Options:"
                 echo "  --port PORT     Set server port (default: $DEFAULT_PORT)"
                 echo "  --host HOST     Set server host (default: $DEFAULT_HOST)"
+                echo "  --domain DOMAIN Set domain name for nginx/SSL setup"
                 echo "  --dir DIR       Set installation directory"
                 echo "  --skip-deps     Skip dependency installation"
                 echo "  --help          Show this help message"
@@ -554,6 +672,9 @@ main() {
 
     read -p "Installation directory [$INSTALL_DIR]: " INPUT_DIR
     INSTALL_DIR="${INPUT_DIR:-$INSTALL_DIR}"
+
+    read -p "Domain name (optional): " INPUT_DOMAIN
+    DOMAIN="${INPUT_DOMAIN:-$DEFAULT_DOMAIN}"
 
     request_password
 
@@ -583,6 +704,9 @@ main() {
     # Create environment and service
     create_env_file
     create_service
+
+    # Configure domain and SSL
+    configure_domain
 
     print_summary
 }
