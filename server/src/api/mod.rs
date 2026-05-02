@@ -22,8 +22,8 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
 
         // Project routes
         .route("/projects", axum::routing::get(list_projects))
-        .route("/projects/:id/sessions", axum::routing::get(get_project_sessions))
-        .route("/projects/:id/sessions/:session_id/history", axum::routing::get(load_session_history))
+        .route("/projects/{id}/sessions", axum::routing::get(get_project_sessions))
+        .route("/projects/{id}/sessions/{session_id}/history", axum::routing::get(load_session_history))
 
         // Directory routes
         .route("/directories", axum::routing::get(list_directory_contents))
@@ -55,22 +55,22 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
         // Agent routes
         .route("/agents", axum::routing::get(list_agents))
         // .route("/agents", axum::routing::post(create_agent))
-        .route("/agents/:id", axum::routing::get(get_agent))
-        // .route("/agents/:id", axum::routing::put(update_agent))
-        .route("/agents/:id", axum::routing::delete(delete_agent))
-        .route("/agents/:id/export", axum::routing::get(export_agent))
+        .route("/agents/{id}", axum::routing::get(get_agent))
+        // .route("/agents/{id}", axum::routing::put(update_agent))
+        .route("/agents/{id}", axum::routing::delete(delete_agent))
+        .route("/agents/{id}/export", axum::routing::get(export_agent))
         // .route("/agents/import", axum::routing::post(import_agent))
 
         // Agent execution routes
-        .route("/agents/:id/execute", axum::routing::post(execute_agent))
-        .route("/agents/:id/runs", axum::routing::get(list_agent_runs))
-        .route("/runs/:id", axum::routing::get(get_agent_run))
-        // .route("/runs/:id/realtime", axum::routing::get(get_agent_run_with_metrics))
+        .route("/agents/{id}/execute", axum::routing::post(execute_agent))
+        .route("/agents/{id}/runs", axum::routing::get(list_agent_runs))
+        .route("/runs/{id}", axum::routing::get(get_agent_run))
+        // .route("/runs/{id}/realtime", axum::routing::get(get_agent_run_with_metrics))
         .route("/runs", axum::routing::get(list_running_sessions))
-        .route("/runs/:id/kill", axum::routing::post(kill_agent_session))
-        .route("/runs/:id/status", axum::routing::get(get_session_status))
-        .route("/runs/:id/output", axum::routing::get(get_session_output))
-        .route("/runs/:id/live-output", axum::routing::get(get_live_session_output))
+        .route("/runs/{id}/kill", axum::routing::post(kill_agent_session))
+        .route("/runs/{id}/status", axum::routing::get(get_session_status))
+        .route("/runs/{id}/output", axum::routing::get(get_session_output))
+        .route("/runs/{id}/live-output", axum::routing::get(get_live_session_output))
         .route("/runs/cleanup", axum::routing::post(cleanup_finished_processes))
 
         // GitHub agents
@@ -80,12 +80,12 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
 
         // Checkpoint routes
         .route("/checkpoints", axum::routing::post(create_checkpoint))
-        .route("/checkpoints/:checkpoint_id/restore", axum::routing::post(restore_checkpoint))
+        .route("/checkpoints/{checkpoint_id}/restore", axum::routing::post(restore_checkpoint))
         .route("/checkpoints/list", axum::routing::get(list_checkpoints))
-        .route("/checkpoints/:checkpoint_id/fork", axum::routing::post(fork_from_checkpoint))
+        .route("/checkpoints/{checkpoint_id}/fork", axum::routing::post(fork_from_checkpoint))
         .route("/checkpoints/timeline", axum::routing::get(get_session_timeline))
         .route("/checkpoints/settings", axum::routing::put(update_checkpoint_settings))
-        .route("/checkpoints/:from/diff/:to", axum::routing::get(get_checkpoint_diff))
+        .route("/checkpoints/{from}/diff/{to}", axum::routing::get(get_checkpoint_diff))
         .route("/checkpoints/track", axum::routing::post(track_checkpoint_message))
         .route("/checkpoints/track/batch", axum::routing::post(track_session_messages))
         .route("/checkpoints/auto-check", axum::routing::post(check_auto_checkpoint))
@@ -97,12 +97,12 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
         // MCP routes
         .route("/mcp/add", axum::routing::post(mcp_add))
         .route("/mcp/list", axum::routing::get(mcp_list))
-        .route("/mcp/:name", axum::routing::get(mcp_get))
-        .route("/mcp/:name", axum::routing::delete(mcp_remove))
+        .route("/mcp/{name}", axum::routing::get(mcp_get))
+        .route("/mcp/{name}", axum::routing::delete(mcp_remove))
         .route("/mcp/add-json", axum::routing::post(mcp_add_json))
         .route("/mcp/from-claude-desktop", axum::routing::post(mcp_add_from_claude_desktop))
         .route("/mcp/serve", axum::routing::post(mcp_serve))
-        .route("/mcp/test/:name", axum::routing::get(mcp_test_connection))
+        .route("/mcp/test/{name}", axum::routing::get(mcp_test_connection))
         .route("/mcp/reset-choices", axum::routing::post(mcp_reset_project_choices))
         .route("/mcp/status", axum::routing::get(mcp_get_server_status))
         .route("/mcp/project-config", axum::routing::get(mcp_read_project_config))
