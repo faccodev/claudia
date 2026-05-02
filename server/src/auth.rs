@@ -55,8 +55,8 @@ impl AuthService {
 
         let claims = Claims {
             sub: user_id.to_string(),
-            exp: expiration.exp() as usize,
-            iat: now.exp() as usize,
+            exp: expiration.elapsed().as_secs() as usize + (expiration_hours * 3600) as usize,
+            iat: now.elapsed().as_secs() as usize,
         };
 
         encode(&Header::default(), &claims, &self.encoding_key)
@@ -71,25 +71,6 @@ impl AuthService {
             .ok()
             .map(|data| data.claims.sub)
     }
-}
-
-/// Middleware to require authentication
-pub async fn auth_middleware(
-    mut req: Request,
-    next: Next,
-) -> Response {
-    // Get Authorization header
-    let auth_header = req
-        .headers()
-        .get(http::header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.strip_prefix("Bearer ").unwrap_or(s));
-
-    // For now, allow requests without auth for development
-    // TODO: Enable strict auth in production
-    let _ = auth_header;
-
-    next.run(req).await
 }
 
 /// Generate a simple secret from environment or generate one

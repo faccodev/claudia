@@ -8,6 +8,16 @@ use std::sync::Arc;
 use crate::state::AppState;
 use crate::api::models::*;
 
+/// Expand tilde in path to user's home directory
+fn expand_tilde(path: &str) -> String {
+    if path.starts_with("~/") {
+        if let Some(home) = dirs::home_dir() {
+            return path.replacen("~", &home.to_string_lossy(), 1);
+        }
+    }
+    path.to_string()
+}
+
 // ============== Auth Handlers ==============
 
 pub async fn login(
@@ -177,7 +187,7 @@ pub async fn list_directory_contents(
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> impl IntoResponse {
     let path = params.get("path").map(|p| p.as_str()).unwrap_or(".");
-    let path = shelly::Shelly::tilde_expand(path);
+    let path = expand_tilde(path);
 
     match std::fs::read_dir(&path) {
         Ok(entries) => {
