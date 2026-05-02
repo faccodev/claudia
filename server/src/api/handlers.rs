@@ -573,7 +573,7 @@ pub async fn list_agents(
 pub async fn create_agent(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateAgentRequest>,
-) -> (StatusCode, Json<ApiResponse<Agent>>) {
+) -> impl IntoResponse {
     let db = state.db.lock().unwrap();
 
     let result = db.execute(
@@ -590,15 +590,16 @@ pub async fn create_agent(
         ],
     );
 
-    match result {
+    let response: ApiResponse<Agent> = match result {
         Ok(_) => {
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            (StatusCode::CREATED, Json(ApiResponse::<Agent>::success(agent)))
+            ApiResponse::success(agent)
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Agent>::error(e.to_string()))),
-    }
+        Err(e) => ApiResponse::<Agent>::error(e.to_string()),
+    };
+    (StatusCode::CREATED, Json(response))
 }
 
 pub async fn get_agent(
@@ -617,7 +618,7 @@ pub async fn update_agent(
     Path(id): Path<i64>,
     State(state): State<Arc<AppState>>,
     Json(req): Json<UpdateAgentRequest>,
-) -> (StatusCode, Json<ApiResponse<Agent>>) {
+) -> impl IntoResponse {
     let db = state.db.lock().unwrap();
 
     let result = db.execute(
@@ -635,14 +636,15 @@ pub async fn update_agent(
         ],
     );
 
-    match result {
+    let response: ApiResponse<Agent> = match result {
         Ok(_) => {
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            (StatusCode::OK, Json(ApiResponse::<Agent>::success(agent)))
+            ApiResponse::success(agent)
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Agent>::error(e.to_string()))),
-    }
+        Err(e) => ApiResponse::<Agent>::error(e.to_string()),
+    };
+    (StatusCode::OK, Json(response))
 }
 
 pub async fn delete_agent(
@@ -684,7 +686,7 @@ pub async fn export_agent(
 pub async fn import_agent(
     State(state): State<Arc<AppState>>,
     Json(json_data): Json<String>,
-) -> (StatusCode, Json<ApiResponse<Agent>>) {
+) -> impl IntoResponse {
     let import: AgentExport = match serde_json::from_str(&json_data) {
         Ok(i) => i,
         Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::<Agent>::error(format!("Invalid JSON: {}", e)))),
@@ -702,15 +704,16 @@ pub async fn import_agent(
         rusqlite::params![&name, &import.agent.icon, &import.agent.system_prompt, &import.agent.default_task, &import.agent.model],
     );
 
-    match result {
+    let response: ApiResponse<Agent> = match result {
         Ok(_) => {
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            (StatusCode::CREATED, Json(ApiResponse::<Agent>::success(agent)))
+            ApiResponse::success(agent)
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Agent>::error(e.to_string()))),
-    }
+        Err(e) => ApiResponse::<Agent>::error(e.to_string()),
+    };
+    (StatusCode::CREATED, Json(response))
 }
 
 // ============== Agent Execution Handlers ==============
@@ -820,7 +823,7 @@ pub async fn get_agent_run(
 pub async fn get_agent_run_with_metrics(
     Path(run_id): Path<i64>,
     State(state): State<Arc<AppState>>,
-) -> (StatusCode, Json<ApiResponse<AgentRunWithMetrics>>) {
+) -> impl IntoResponse {
     let db = state.db.lock().unwrap();
     let run: Option<AgentRun> = db.query_row(
         "SELECT id, agent_id, agent_name, agent_icon, task, model, project_path, session_id, status, pid, process_started_at, created_at, completed_at FROM agent_runs WHERE id = ?",
@@ -842,13 +845,16 @@ pub async fn get_agent_run_with_metrics(
         })
     ).ok();
 
-    match run {
+    let response: ApiResponse<AgentRunWithMetrics> = match run {
         Some(r) => {
             drop(db);
             let metrics = calculate_run_metrics(&state, run_id).await;
-            (StatusCode::OK, Json(ApiResponse::success(AgentRunWithMetrics { run: r, metrics, output: None })))
+            ApiResponse::success(AgentRunWithMetrics { run: r, metrics, output: None })
         }
-        None => (StatusCode::NOT_FOUND, Json(ApiResponse::<AgentRunWithMetrics>::error("Run not found".to_string()))),
+        None => ApiResponse::<AgentRunWithMetrics>::error("Run not found".to_string()),
+    };
+    (StatusCode::OK, Json(response))
+}
     }
 }
 
@@ -1020,7 +1026,7 @@ pub async fn fetch_github_agent_content(
 pub async fn import_agent_from_github(
     State(state): State<Arc<AppState>>,
     Json(url): Json<String>,
-) -> (StatusCode, Json<ApiResponse<Agent>>) {
+) -> impl IntoResponse {
     let client = reqwest::Client::new();
 
     let content = match client.get(&url).header("User-Agent", "claudia-server").send().await {
@@ -1030,7 +1036,6 @@ pub async fn import_agent_from_github(
 
     if let Some(content) = content {
         if let Ok(export) = serde_json::from_str::<AgentExport>(&content) {
-            // Import as regular agent
             let db = state.db.lock().unwrap();
             let name = format!("{} (Imported)", export.agent.name);
 

@@ -505,6 +505,12 @@ impl<T: Serialize> ApiResponse<T> {
     }
 }
 
+impl<T: Serialize> axum::response::IntoResponse for ApiResponse<T> {
+    fn into_response(self) -> axum::response::Response {
+        axum::Json(self).into_response()
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct ApiMessage {
     pub message: String,
