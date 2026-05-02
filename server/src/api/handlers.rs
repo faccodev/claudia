@@ -169,7 +169,7 @@ pub async fn get_project_sessions(
     let sessions_dir = state.claude_dir.join("projects").join(&project_id);
 
     if !sessions_dir.exists() {
-        return (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error("Project not found".to_string())));
+        return (StatusCode::NOT_FOUND, Json(ApiResponse::<Vec<String>>::error("Project not found".to_string())));
     }
 
     let sessions = get_project_sessions_list(&sessions_dir);
@@ -188,7 +188,7 @@ pub async fn load_session_history(
         .join(format!("{}.jsonl", session_id));
 
     if !session_file.exists() {
-        return (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error("Session not found".to_string())));
+        return (StatusCode::NOT_FOUND, Json(ApiResponse::<String>::error("Session not found".to_string())));
     }
 
     match std::fs::read_to_string(&session_file) {
