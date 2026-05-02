@@ -931,10 +931,10 @@ pub async fn get_session_status(
     let status: Option<String> = db.query_row(
         "SELECT status FROM agent_runs WHERE id = ?",
         [run_id],
-        |row| row.get::<_, String>(0).ok(),
+        |row| row.get::<_, String>(0),
     ).ok();
 
-    (StatusCode::OK, Json(status.unwrap_or_else(|| "unknown".to_string())))
+    (StatusCode::OK, Json(ApiResponse::success(status.unwrap_or_else(|| "unknown".to_string()))))
 }
 
 pub async fn get_session_output(

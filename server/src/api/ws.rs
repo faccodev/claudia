@@ -92,7 +92,7 @@ async fn handle_socket(
                 let status: Option<String> = db.query_row(
                     "SELECT status FROM agent_runs WHERE id = ?",
                     [run_id],
-                    |row| row.get::<_, String>(0).ok(),
+                    |row| row.get::<_, String>(0),
                 ).ok();
 
                 if let Some(status) = status {
