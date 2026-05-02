@@ -818,8 +818,7 @@ pub async fn get_agent_run(
 }
 
 pub async fn get_agent_run_with_metrics(
-
-pub async fn get_agent_run_with_real_time_metrics(
+    Path(run_id): Path<i64>,
     Path(run_id): Path<i64>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
