@@ -573,7 +573,7 @@ pub async fn list_agents(
 pub async fn create_agent(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateAgentRequest>,
-) -> impl IntoResponse {
+) -> (StatusCode, Json<ApiResponse<Agent>>) {
     let db = state.db.lock().unwrap();
 
     let result = db.execute(
@@ -595,9 +595,9 @@ pub async fn create_agent(
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            ApiResponse::success(agent)
+            (StatusCode::CREATED, Json(ApiResponse::success(agent)))
         }
-        Err(e) => ApiResponse::<Agent>::error(e.to_string()),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(e.to_string()))),
     }
 }
 
@@ -617,7 +617,7 @@ pub async fn update_agent(
     Path(id): Path<i64>,
     State(state): State<Arc<AppState>>,
     Json(req): Json<UpdateAgentRequest>,
-) -> impl IntoResponse {
+) -> (StatusCode, Json<ApiResponse<Agent>>) {
     let db = state.db.lock().unwrap();
 
     let result = db.execute(
@@ -639,9 +639,9 @@ pub async fn update_agent(
         Ok(_) => {
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            ApiResponse::<Agent>::success(agent)
+            (StatusCode::OK, Json(ApiResponse::success(agent)))
         }
-        Err(e) => ApiResponse::<Agent>::error(e.to_string()),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(e.to_string()))),
     }
 }
 
@@ -684,10 +684,10 @@ pub async fn export_agent(
 pub async fn import_agent(
     State(state): State<Arc<AppState>>,
     Json(json_data): Json<String>,
-) -> impl IntoResponse {
+) -> (StatusCode, Json<ApiResponse<Agent>>) {
     let import: AgentExport = match serde_json::from_str(&json_data) {
         Ok(i) => i,
-        Err(e) => return ApiResponse::<Agent>::error(format!("Invalid JSON: {}", e)),
+        Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::error(format!("Invalid JSON: {}", e)))),
     };
 
     let db = state.db.lock().unwrap();
@@ -707,9 +707,9 @@ pub async fn import_agent(
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            ApiResponse::<Agent>::success(agent)
+            (StatusCode::CREATED, Json(ApiResponse::success(agent)))
         }
-        Err(e) => ApiResponse::<Agent>::error(e.to_string()),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(e.to_string()))),
     }
 }
 
@@ -820,7 +820,7 @@ pub async fn get_agent_run(
 pub async fn get_agent_run_with_metrics(
     Path(run_id): Path<i64>,
     State(state): State<Arc<AppState>>,
-) -> impl IntoResponse {
+) -> (StatusCode, Json<ApiResponse<AgentRunWithMetrics>>) {
     let db = state.db.lock().unwrap();
     let run: Option<AgentRun> = db.query_row(
         "SELECT id, agent_id, agent_name, agent_icon, task, model, project_path, session_id, status, pid, process_started_at, created_at, completed_at FROM agent_runs WHERE id = ?",
@@ -846,9 +846,9 @@ pub async fn get_agent_run_with_metrics(
         Some(r) => {
             drop(db);
             let metrics = calculate_run_metrics(&state, run_id).await;
-            ApiResponse::success(AgentRunWithMetrics { run: r, metrics, output: None })
+            (StatusCode::OK, Json(ApiResponse::success(AgentRunWithMetrics { run: r, metrics, output: None })))
         }
-        None => ApiResponse::<AgentRunWithMetrics>::error("Run not found".to_string()),
+        None => (StatusCode::NOT_FOUND, Json(ApiResponse::error("Run not found".to_string()))),
     }
 }
 
@@ -1020,7 +1020,7 @@ pub async fn fetch_github_agent_content(
 pub async fn import_agent_from_github(
     State(state): State<Arc<AppState>>,
     Json(url): Json<String>,
-) -> impl IntoResponse {
+) -> (StatusCode, Json<ApiResponse<Agent>>) {
     let client = reqwest::Client::new();
 
     let content = match client.get(&url).header("User-Agent", "claudia-server").send().await {
@@ -1042,12 +1042,12 @@ pub async fn import_agent_from_github(
                 let id = db.last_insert_rowid();
                 drop(db);
                 let agent = get_agent_by_id(&state, id).await;
-                return ApiResponse::<Agent>::success(agent);
+                return (StatusCode::CREATED, Json(ApiResponse::success(agent)));
             }
         }
     }
 
-    ApiResponse::<Agent>::error("Failed to import agent".to_string())
+    (StatusCode::BAD_REQUEST, Json(ApiResponse::error("Failed to import agent".to_string())))
 }
 
 // ============== Checkpoint Handlers ==============
