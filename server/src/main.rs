@@ -11,23 +11,19 @@ use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize logger
     env_logger::init();
-
     log::info!("Starting Claudia Server...");
 
     let state = state::AppState::new().await?;
     let shared_state = std::sync::Arc::new(state);
 
-    // Build CORS layer
     let cors = CorsLayer::permissive();
 
-    // Build router with static file serving
     let app = Router::new()
         .nest("/api", api::routes(shared_state.clone()))
         .route_service("/", ServeDir::new("static"))
         .layer(ServiceBuilder::new().layer(cors))
-        .with_state(shared_state);
+        .with_state(());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     log::info!("Claudia Server listening on http://{}", addr);

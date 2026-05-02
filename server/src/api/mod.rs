@@ -115,4 +115,5 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
         .route("/usage/sessions", axum::routing::get(get_session_stats))
 
         .layer(cors)
+        .with_state(state)
 }
