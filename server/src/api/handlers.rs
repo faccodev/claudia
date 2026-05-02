@@ -573,7 +573,7 @@ pub async fn list_agents(
 pub async fn create_agent(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CreateAgentRequest>,
-) -> (StatusCode, Json<ApiResponse<Agent>>) {
+) -> impl IntoResponse {
     let db = state.db.lock().unwrap();
 
     let result = db.execute(
@@ -595,9 +595,9 @@ pub async fn create_agent(
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            (StatusCode::CREATED, Json(ApiResponse::success(agent)))
+            ApiResponse::success(agent)
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(e.to_string()))),
+        Err(e) => ApiResponse::error(e.to_string()),
     }
 }
 

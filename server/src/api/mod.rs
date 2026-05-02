@@ -54,18 +54,18 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
 
         // Agent routes
         .route("/agents", axum::routing::get(list_agents))
-        .route("/agents", axum::routing::post(create_agent))
+        // .route("/agents", axum::routing::post(create_agent))
         .route("/agents/:id", axum::routing::get(get_agent))
         .route("/agents/:id", axum::routing::put(update_agent))
         .route("/agents/:id", axum::routing::delete(delete_agent))
         .route("/agents/:id/export", axum::routing::get(export_agent))
-        .route("/agents/import", axum::routing::post(import_agent))
+        // .route("/agents/import", axum::routing::post(import_agent))
 
         // Agent execution routes
         .route("/agents/:id/execute", axum::routing::post(execute_agent))
         .route("/agents/:id/runs", axum::routing::get(list_agent_runs))
         .route("/runs/:id", axum::routing::get(get_agent_run))
-        .route("/runs/:id/realtime", axum::routing::get(get_agent_run_with_metrics))
+        // .route("/runs/:id/realtime", axum::routing::get(get_agent_run_with_metrics))
         .route("/runs", axum::routing::get(list_running_sessions))
         .route("/runs/:id/kill", axum::routing::post(kill_agent_session))
         .route("/runs/:id/status", axum::routing::get(get_session_status))
@@ -76,7 +76,7 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
         // GitHub agents
         .route("/github-agents", axum::routing::get(fetch_github_agents))
         .route("/github-agents/content", axum::routing::get(fetch_github_agent_content))
-        .route("/github-agents/import", axum::routing::post(import_agent_from_github))
+        // .route("/github-agents/import", axum::routing::post(import_agent_from_github))
 
         // Checkpoint routes
         .route("/checkpoints", axum::routing::post(create_checkpoint))
