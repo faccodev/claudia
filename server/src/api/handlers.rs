@@ -678,7 +678,7 @@ pub async fn export_agent(
         },
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(serde_json::to_string(&export).unwrap_or_default())))
+    (StatusCode::OK, Json(ApiResponse::<String>::success(serde_json::to_string(&export).unwrap_or_default())))
 }
 
 pub async fn import_agent(
@@ -750,7 +750,7 @@ pub async fn execute_agent(
         spawn_agent_process(state_clone, run_id, agent_id, agent, req.project_path, req.task, req.model).await;
     });
 
-    (StatusCode::OK, Json(ApiResponse::success(ExecuteRunResponse { run_id })))
+    (StatusCode::OK, Json(ApiResponse::<ExecuteRunResponse>::success(ExecuteRunResponse { run_id })))
 }
 
 pub async fn list_agent_runs(
@@ -892,7 +892,7 @@ pub async fn kill_agent_session(
     let pid: Option<u32> = db.query_row(
         "SELECT pid FROM agent_runs WHERE id = ?",
         [run_id],
-        |row| row.get::<_, u32>(0).ok(),
+        |row| row.get::<_, Option<u32>>(0).ok().flatten(),
     ).ok().flatten();
 
     drop(db);
@@ -931,7 +931,7 @@ pub async fn get_session_status(
     let status: Option<String> = db.query_row(
         "SELECT status FROM agent_runs WHERE id = ?",
         [run_id],
-        |row| row.get::<_, u32>(0).ok(),
+        |row| row.get::<_, String>(0).ok(),
     ).ok();
 
     (StatusCode::OK, Json(status.unwrap_or_else(|| "unknown".to_string())))
@@ -969,7 +969,7 @@ pub async fn get_live_session_output(
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let output = state.process_registry.get_live_output(run_id).await;
-    (StatusCode::OK, Json(output))
+    (StatusCode::OK, Json(ApiResponse::success(output)))
 }
 
 pub async fn cleanup_finished_processes(
@@ -977,7 +977,7 @@ pub async fn cleanup_finished_processes(
 ) -> impl IntoResponse {
     let db = state.db.lock().unwrap();
     let count = db.execute("UPDATE agent_runs SET status = 'completed', completed_at = datetime('now') WHERE status = 'running' AND pid IS NOT NULL AND NOT EXISTS (SELECT 1 FROM active_processes WHERE pid = agent_runs.pid)", []).unwrap_or(0);
-    (StatusCode::OK, Json(count))
+    (StatusCode::OK, Json(ApiResponse::success(count)))
 }
 
 // ============== GitHub Handlers ==============
@@ -1247,10 +1247,8 @@ pub async fn mcp_add(
     let mut cmd = std::process::Command::new(&claude_path);
     cmd.arg("mcp").arg("add").arg("-s").arg(req.scope.as_deref().unwrap_or("user"));
 
-    if let Some(ref transport) = req.transport {
-        if transport == "sse" {
-            cmd.arg("--transport").arg("sse");
-        }
+    if req.transport == "sse" {
+        cmd.arg("--transport").arg("sse");
     }
 
     if let Some(ref command) = req.command {
