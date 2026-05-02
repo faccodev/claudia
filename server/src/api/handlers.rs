@@ -37,18 +37,21 @@ pub async fn login(
         )
         .ok();
 
-    if let Some((id, _username, password_hash)) = user {
-        let auth = AuthService::new(&crate::auth::get_jwt_secret());
-        if auth.verify_password(&req.password, &password_hash).unwrap_or(false) {
-            let token = auth.create_token(&id.to_string(), 24).unwrap_or_default();
-            return (StatusCode::OK, Json(AuthResponse {
-                token,
-                user: UserInfo { id, username: _username },
-            }));
+    match user {
+        Some((id, username, password_hash)) => {
+            let auth = AuthService::new(&crate::auth::get_jwt_secret());
+            if auth.verify_password(&req.password, &password_hash).unwrap_or(false) {
+                let token = auth.create_token(&id.to_string(), 24).unwrap_or_default();
+                (StatusCode::OK, Json(AuthResponse {
+                    token,
+                    user: UserInfo { id, username },
+                }))
+            } else {
+                (StatusCode::UNAUTHORIZED, Json(ApiResponse::<()>::error("Invalid credentials".to_string())))
+            }
         }
+        None => (StatusCode::UNAUTHORIZED, Json(ApiResponse::<()>::error("Invalid credentials".to_string()))),
     }
-
-    (StatusCode::UNAUTHORIZED, Json(ApiResponse::<()>::error("Invalid credentials".to_string())))
 }
 
 pub async fn register(
