@@ -56,7 +56,7 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
         .route("/agents", axum::routing::get(list_agents))
         // .route("/agents", axum::routing::post(create_agent))
         .route("/agents/:id", axum::routing::get(get_agent))
-        // .route("/agents/:id", axum::routing::put(update_agent))
+        .route("/agents/:id", axum::routing::put(update_agent))
         .route("/agents/:id", axum::routing::delete(delete_agent))
         .route("/agents/:id/export", axum::routing::get(export_agent))
         // .route("/agents/import", axum::routing::post(import_agent))
