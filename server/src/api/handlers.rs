@@ -243,7 +243,7 @@ pub async fn list_directory_contents(
 
             (StatusCode::OK, Json(ApiResponse::<Vec<FileEntry>>::success(files)))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -336,7 +336,7 @@ pub async fn execute_claude_code(
 
     match session_id {
         Ok(id) => (StatusCode::OK, Json(ApiResponse::<String>::success(id))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -356,7 +356,7 @@ pub async fn continue_claude_code(
 
     match session_id {
         Ok(id) => (StatusCode::OK, Json(ApiResponse::<String>::success(id))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -376,7 +376,7 @@ pub async fn resume_claude_code(
 
     match session_id {
         Ok(id) => (StatusCode::OK, Json(ApiResponse::<String>::success(id))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -429,9 +429,9 @@ pub async fn save_claude_settings(
     match serde_json::to_string_pretty(&settings) {
         Ok(content) => match std::fs::write(&settings_path, content) {
             Ok(_) => (StatusCode::OK, Json(ApiMessage::new("Settings saved"))),
-            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
         },
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -450,7 +450,7 @@ pub async fn save_system_prompt(
     let claude_md = state.claude_dir.join("CLAUDE.md");
     match std::fs::write(&claude_md, content) {
         Ok(_) => (StatusCode::OK, Json(ApiMessage::new("System prompt saved"))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -534,7 +534,7 @@ pub async fn save_claude_md_file(
 ) -> impl IntoResponse {
     match std::fs::write(&req.file_path, &req.content) {
         Ok(_) => (StatusCode::OK, Json(ApiMessage::new("File saved"))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -597,7 +597,7 @@ pub async fn create_agent(
             let agent = get_agent_by_id(&state, id).await;
             (StatusCode::CREATED, Json(agent))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -641,7 +641,7 @@ pub async fn update_agent(
             let agent = get_agent_by_id(&state, id).await;
             (StatusCode::OK, Json(agent))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -653,7 +653,7 @@ pub async fn delete_agent(
 
     match db.execute("DELETE FROM agents WHERE id = ?", [id]) {
         Ok(_) => (StatusCode::OK, Json(ApiMessage::new("Agent deleted"))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -709,7 +709,7 @@ pub async fn import_agent(
             let agent = get_agent_by_id(&state, id).await;
             (StatusCode::CREATED, Json(agent))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -1492,9 +1492,9 @@ pub async fn mcp_save_project_config(
     match serde_json::to_string_pretty(&req.config) {
         Ok(content) => match std::fs::write(&config_path, content) {
             Ok(_) => (StatusCode::OK, Json(ApiMessage::new("Config saved"))),
-            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
         },
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
