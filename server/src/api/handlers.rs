@@ -93,12 +93,12 @@ pub async fn me(
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let db = state.db.lock().unwrap();
-    let user: Option<(i64, String)> = db
+    let user = db
         .query_row("SELECT id, username FROM users LIMIT 1", [], |row| {
             Ok((row.get(0)?, row.get(1)?))
         })
         .ok()
-        .unwrap_or((1, "default".to_string()));
+        .unwrap_or((1i64, "default".to_string()));
 
     (StatusCode::OK, Json(UserInfo { id: user.0, username: user.1 }))
 }
@@ -111,7 +111,7 @@ pub async fn list_projects(
     let projects_dir = state.claude_dir.join("projects");
 
     if !projects_dir.exists() {
-        return (StatusCode::OK, Json(vec::<Project>::new()));
+        return (StatusCode::OK, Json(Vec::<Project>::new()));
     }
 
     let mut projects = Vec::new();
