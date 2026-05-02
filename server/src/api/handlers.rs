@@ -590,16 +590,15 @@ pub async fn create_agent(
         ],
     );
 
-    let response: ApiResponse<Agent> = match result {
+    match result {
         Ok(_) => {
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            ApiResponse::success(agent)
+            ApiResponse::<Agent>::success(agent)
         }
         Err(e) => ApiResponse::<Agent>::error(e.to_string()),
-    };
-    (StatusCode::CREATED, Json(response))
+    }
 }
 
 pub async fn get_agent(
@@ -636,15 +635,14 @@ pub async fn update_agent(
         ],
     );
 
-    let response: ApiResponse<Agent> = match result {
+    match result {
         Ok(_) => {
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            ApiResponse::success(agent)
+            ApiResponse::<Agent>::success(agent)
         }
         Err(e) => ApiResponse::<Agent>::error(e.to_string()),
-    };
-    (StatusCode::OK, Json(response))
+    }
 }
 
 pub async fn delete_agent(
@@ -689,7 +687,7 @@ pub async fn import_agent(
 ) -> impl IntoResponse {
     let import: AgentExport = match serde_json::from_str(&json_data) {
         Ok(i) => i,
-        Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::<Agent>::error(format!("Invalid JSON: {}", e)))),
+        Err(e) => return ApiResponse::<Agent>::error(format!("Invalid JSON: {}", e)),
     };
 
     let db = state.db.lock().unwrap();
@@ -704,16 +702,15 @@ pub async fn import_agent(
         rusqlite::params![&name, &import.agent.icon, &import.agent.system_prompt, &import.agent.default_task, &import.agent.model],
     );
 
-    let response: ApiResponse<Agent> = match result {
+    match result {
         Ok(_) => {
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            ApiResponse::success(agent)
+            ApiResponse::<Agent>::success(agent)
         }
         Err(e) => ApiResponse::<Agent>::error(e.to_string()),
-    };
-    (StatusCode::CREATED, Json(response))
+    }
 }
 
 // ============== Agent Execution Handlers ==============
@@ -845,15 +842,14 @@ pub async fn get_agent_run_with_metrics(
         })
     ).ok();
 
-    let response: ApiResponse<AgentRunWithMetrics> = match run {
+    match run {
         Some(r) => {
             drop(db);
             let metrics = calculate_run_metrics(&state, run_id).await;
             ApiResponse::success(AgentRunWithMetrics { run: r, metrics, output: None })
         }
         None => ApiResponse::<AgentRunWithMetrics>::error("Run not found".to_string()),
-    };
-    (StatusCode::OK, Json(response))
+    }
 }
 
 pub async fn list_running_sessions(
@@ -1046,12 +1042,12 @@ pub async fn import_agent_from_github(
                 let id = db.last_insert_rowid();
                 drop(db);
                 let agent = get_agent_by_id(&state, id).await;
-                return (StatusCode::CREATED, Json(ApiResponse::<Agent>::success(agent)));
+                return ApiResponse::<Agent>::success(agent);
             }
         }
     }
 
-    (StatusCode::BAD_REQUEST, Json(ApiResponse::<Agent>::error("Failed to import agent".to_string())))
+    ApiResponse::<Agent>::error("Failed to import agent".to_string())
 }
 
 // ============== Checkpoint Handlers ==============
