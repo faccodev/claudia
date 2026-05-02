@@ -429,7 +429,7 @@ pub async fn save_claude_settings(
     match serde_json::to_string_pretty(&settings) {
         Ok(content) => match std::fs::write(&settings_path, content) {
             Ok(_) => (StatusCode::OK, Json(ApiMessage::new("Settings saved"))),
-            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to save settings: {}", e)))),
         },
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
     }
@@ -450,7 +450,7 @@ pub async fn save_system_prompt(
     let claude_md = state.claude_dir.join("CLAUDE.md");
     match std::fs::write(&claude_md, content) {
         Ok(_) => (StatusCode::OK, Json(ApiMessage::new("System prompt saved"))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to save system prompt: {}", e)))),
     }
 }
 
@@ -607,9 +607,9 @@ pub async fn get_agent(
 ) -> impl IntoResponse {
     let agent = get_agent_by_id(&state, id).await;
     if agent.id.is_some() {
-        (StatusCode::OK, Json(agent))
+        (StatusCode::OK, Json(ApiResponse::success(agent)))
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error("Agent not found".to_string())))
+        (StatusCode::NOT_FOUND, Json(ApiResponse::<Agent>::error("Agent not found".to_string())))
     }
 }
 
@@ -663,7 +663,7 @@ pub async fn export_agent(
 ) -> impl IntoResponse {
     let agent = get_agent_by_id(&state, id).await;
     if agent.id.is_none() {
-        return (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error("Agent not found".to_string())));
+        return (StatusCode::NOT_FOUND, Json(ApiResponse::<AgentExport>::error("Agent not found".to_string())));
     }
 
     let export = AgentExport {
@@ -687,7 +687,7 @@ pub async fn import_agent(
 ) -> impl IntoResponse {
     let import: AgentExport = match serde_json::from_str(&json_data) {
         Ok(i) => i,
-        Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::<()>::error(format!("Invalid JSON: {}", e)))),
+        Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::<AgentExport>::error(format!("Invalid JSON: {}", e)))),
     };
 
     let db = state.db.lock().unwrap();
@@ -707,9 +707,9 @@ pub async fn import_agent(
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            (StatusCode::CREATED, Json(agent))
+            (StatusCode::CREATED, Json(ApiResponse::success(agent)))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Agent>::error(e.to_string()))),
     }
 }
 
@@ -722,7 +722,7 @@ pub async fn execute_agent(
 ) -> impl IntoResponse {
     let agent = get_agent_by_id(&state, agent_id).await;
     if agent.id.is_none() {
-        return (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error("Agent not found".to_string())));
+        return (StatusCode::NOT_FOUND, Json(ApiResponse::<AgentRun>::error("Agent not found".to_string())));
     }
 
     // Create agent run record
@@ -741,7 +741,7 @@ pub async fn execute_agent(
             let db = state.db.lock().unwrap();
             db.last_insert_rowid()
         }
-        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<()>::error(e.to_string()))),
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<i64>::error(e.to_string()))),
     };
 
     // Spawn the agent process
@@ -812,10 +812,12 @@ pub async fn get_agent_run(
     ).ok();
 
     match run {
-        Some(r) => (StatusCode::OK, Json(r)),
-        None => (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error("Run not found".to_string()))),
+        Some(r) => (StatusCode::OK, Json(ApiResponse::success(r))),
+        None => (StatusCode::NOT_FOUND, Json(ApiResponse::<AgentRun>::error("Run not found".to_string()))),
     }
 }
+
+pub async fn get_agent_run_with_metrics(
 
 pub async fn get_agent_run_with_real_time_metrics(
     Path(run_id): Path<i64>,
@@ -845,9 +847,9 @@ pub async fn get_agent_run_with_real_time_metrics(
     match run {
         Some(r) => {
             let metrics = calculate_run_metrics(&state, run_id).await;
-            (StatusCode::OK, Json(AgentRunWithMetrics { run: r, metrics, output: None }))
+            (StatusCode::OK, Json(ApiResponse::success(AgentRunWithMetrics { run: r, metrics, output: None })))
         }
-        None => (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error("Run not found".to_string()))),
+        None => (StatusCode::NOT_FOUND, Json(ApiResponse::<AgentRunWithMetrics>::error("Run not found".to_string()))),
     }
 }
 
@@ -1040,12 +1042,12 @@ pub async fn import_agent_from_github(
                 let id = db.last_insert_rowid();
                 drop(db);
                 let agent = get_agent_by_id(&state, id).await;
-                return (StatusCode::CREATED, Json(agent));
+                return (StatusCode::CREATED, Json(ApiResponse::success(agent)));
             }
         }
     }
 
-    (StatusCode::BAD_REQUEST, Json(ApiResponse::<()>::error("Failed to import agent".to_string())))
+    (StatusCode::BAD_REQUEST, Json(ApiResponse::<Agent>::error("Failed to import agent".to_string())))
 }
 
 // ============== Checkpoint Handlers ==============
