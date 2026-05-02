@@ -1,16 +1,9 @@
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use axum::{
-    body::Body,
-    extract::Request,
-    http::{self, StatusCode},
-    middleware::Next,
-    response::Response,
-};
-use axum_sessions::extractors::WritableSession;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
