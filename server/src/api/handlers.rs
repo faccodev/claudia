@@ -595,7 +595,7 @@ pub async fn create_agent(
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            ApiResponse::<Agent>::success(agent)
+            ApiResponse::success(agent)
         }
         Err(e) => ApiResponse::<Agent>::error(e.to_string()),
     }
