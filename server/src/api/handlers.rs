@@ -595,9 +595,9 @@ pub async fn create_agent(
             let id = db.last_insert_rowid();
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            (StatusCode::CREATED, Json(agent))
+            (StatusCode::CREATED, Json(ApiResponse::success(agent)))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Agent>::error(e.to_string()))),
     }
 }
 
@@ -639,9 +639,9 @@ pub async fn update_agent(
         Ok(_) => {
             drop(db);
             let agent = get_agent_by_id(&state, id).await;
-            (StatusCode::OK, Json(agent))
+            (StatusCode::OK, Json(ApiResponse::success(agent)))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Agent>::error(e.to_string()))),
     }
 }
 
@@ -653,7 +653,7 @@ pub async fn delete_agent(
 
     match db.execute("DELETE FROM agents WHERE id = ?", [id]) {
         Ok(_) => (StatusCode::OK, Json(ApiMessage::new("Agent deleted"))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to delete agent: {}", e)))),
     }
 }
 
@@ -678,7 +678,7 @@ pub async fn export_agent(
         },
     };
 
-    (StatusCode::OK, Json(serde_json::to_string(&export).unwrap_or_default()))
+    (StatusCode::OK, Json(ApiResponse::success(serde_json::to_string(&export).unwrap_or_default())))
 }
 
 pub async fn import_agent(
@@ -687,7 +687,7 @@ pub async fn import_agent(
 ) -> impl IntoResponse {
     let import: AgentExport = match serde_json::from_str(&json_data) {
         Ok(i) => i,
-        Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::<AgentExport>::error(format!("Invalid JSON: {}", e)))),
+        Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::<Agent>::error(format!("Invalid JSON: {}", e)))),
     };
 
     let db = state.db.lock().unwrap();
@@ -750,7 +750,7 @@ pub async fn execute_agent(
         spawn_agent_process(state_clone, run_id, agent_id, agent, req.project_path, req.task, req.model).await;
     });
 
-    (StatusCode::OK, Json(ExecuteRunResponse { run_id }))
+    (StatusCode::OK, Json(ApiResponse::success(ExecuteRunResponse { run_id })))
 }
 
 pub async fn list_agent_runs(
@@ -892,7 +892,7 @@ pub async fn kill_agent_session(
     let pid: Option<u32> = db.query_row(
         "SELECT pid FROM agent_runs WHERE id = ?",
         [run_id],
-        |row| row.get(0).ok(),
+        |row| row.get::<_, u32>(0).ok(),
     ).ok().flatten();
 
     drop(db);
@@ -931,7 +931,7 @@ pub async fn get_session_status(
     let status: Option<String> = db.query_row(
         "SELECT status FROM agent_runs WHERE id = ?",
         [run_id],
-        |row| row.get(0).ok(),
+        |row| row.get::<_, u32>(0).ok(),
     ).ok();
 
     (StatusCode::OK, Json(status.unwrap_or_else(|| "unknown".to_string())))
@@ -989,11 +989,11 @@ pub async fn fetch_github_agents() -> impl IntoResponse {
     match client.get(url).header("User-Agent", "claudia-server").send().await {
         Ok(response) => {
             match response.json::<Vec<GitHubAgentFile>>().await {
-                Ok(files) => (StatusCode::OK, Json(ApiResponse::<Vec<FileEntry>>::success(files))),
-                Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(Vec::<GitHubAgentFile>::new())),
+                Ok(files) => (StatusCode::OK, Json(ApiResponse::success(files))),
+                Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<GitHubAgentFile>>::error("Failed to parse response".to_string()))),
             }
         }
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(Vec::<GitHubAgentFile>::new())),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<GitHubAgentFile>>::error("Request failed".to_string()))),
     }
 }
 
@@ -1481,7 +1481,7 @@ pub async fn mcp_read_project_config(
         }
     }
 
-    (StatusCode::OK, Json(serde_json::Value::Object(serde_json::Map::new())))
+    (StatusCode::OK, Json(ApiResponse::success(serde_json::Value::Object(serde_json::Map::new()))))
 }
 
 pub async fn mcp_save_project_config(
@@ -1492,9 +1492,9 @@ pub async fn mcp_save_project_config(
     match serde_json::to_string_pretty(&req.config) {
         Ok(content) => match std::fs::write(&config_path, content) {
             Ok(_) => (StatusCode::OK, Json(ApiMessage::new("Config saved"))),
-            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to save config: {}", e)))),
         },
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to serialize config: {}", e)))),
     }
 }
 
@@ -1722,7 +1722,7 @@ async fn spawn_agent_process(
     }
 
     let pid = match cmd.spawn() {
-        Ok(child) => Some(child.id().unwrap_or(0)),
+        Ok(child) => Some(child.id()),
         Err(_) => None,
     };
 
