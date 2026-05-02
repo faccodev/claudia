@@ -35,7 +35,7 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
         .route("/claude/resume", axum::routing::post(resume_claude_code))
         .route("/claude/cancel", axum::routing::post(cancel_claude_execution))
         .route("/claude/sessions", axum::routing::get(list_running_claude_sessions))
-        .route("/claude/output/:session_id", axum::routing::get(get_claude_session_output))
+        .route("/claude/output/{session_id}", axum::routing::get(get_claude_session_output))
 
         // Settings routes
         .route("/settings", axum::routing::get(get_claude_settings))
