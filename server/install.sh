@@ -634,6 +634,98 @@ EOF
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════════════
+# Post-Installation Setup
+# ═══════════════════════════════════════════════════════════════════════════════════════
+
+run_post_install() {
+    section "Post-Installation Setup"
+
+    # Create initial admin user
+    log "Setting up initial admin user..."
+    read -p "Admin username [admin]: " ADMIN_USER
+    ADMIN_USER="${ADMIN_USER:-admin}"
+
+    read -p "Admin password: " -s ADMIN_PASS
+    echo
+    if [ -z "$ADMIN_PASS" ]; then
+        warn "Empty password - generating random one..."
+        ADMIN_PASS=$(openssl rand -base64 16 | tr -d '/+=' | head -c 16)
+    fi
+
+    # Register user via API (when server is running)
+    sleep 3  # Give server time to start
+
+    log "Creating admin user..."
+    for i in {1..10}; do
+        response=$(curl -s -X POST "http://127.0.0.1:$PORT/api/auth/register" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\"}" 2>/dev/null)
+
+        if echo "$response" | grep -q '"success":true\|"token"'; then
+            success "Admin user created"
+            break
+        elif echo "$response" | grep -q "already exists"; then
+            success "Admin user already exists"
+            break
+        fi
+
+        if [ $i -lt 10 ]; then
+            log "Retrying... ($i/10)"
+            sleep 2
+        else
+            warn "Could not create admin user. Register manually at /api/auth/register"
+        fi
+    done
+
+    # Claude authentication
+    echo
+    log "Claude CLI Authentication"
+    echo "If you haven't used Claude Code before, you need to authenticate."
+    echo
+
+    if [ -n "$API_KEY" ]; then
+        log "API key provided - skipping interactive login"
+    else
+        read -p "Run 'claude login' to authenticate? [y/N]: " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            log "Starting Claude login..."
+            claude login 2>&1 | tee -a "$LOG_FILE" || warn "claude login failed or cancelled"
+        fi
+    fi
+
+    # Test Claude connection
+    log "Testing Claude connection..."
+    if claude --version &>/dev/null; then
+        if [ -n "$API_KEY" ]; then
+            export ANTHROPIC_API_KEY="$API_KEY"
+        fi
+
+        test_output=$(claude -p "reply with 'hello'" --output-format stream-json 2>&1 | head -5 || true)
+        if echo "$test_output" | grep -qi "hello\|error"; then
+            success "Claude CLI is working"
+        else
+            warn "Claude CLI may not be fully configured"
+        fi
+    else
+        warn "Claude CLI not found in PATH"
+    fi
+
+    # Create a sample project directory
+    log "Creating sample projects directory..."
+    mkdir -p "$HOME/claudia-projects"
+    success "Projects directory: $HOME/claudia-projects"
+
+    # Print access info
+    echo
+    echo -e "${BOLD}Admin Credentials:${NC}"
+    echo -e "  Username: ${CYAN}$ADMIN_USER${NC}"
+    echo -e "  Password: ${CYAN}$ADMIN_PASS${NC}"
+    echo
+    echo "Save these credentials! You can change them later."
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════════════
 # Start Services
 # ═══════════════════════════════════════════════════════════════════════════════════════
 
@@ -797,6 +889,14 @@ main() {
                 CUSTOM_API_URL="$2"
                 shift 2
                 ;;
+            --admin-user)
+                ADMIN_USER="$2"
+                shift 2
+                ;;
+            --admin-password)
+                ADMIN_PASS="$2"
+                shift 2
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS]"
                 echo
@@ -806,6 +906,8 @@ main() {
                 echo "  --dir DIR           Installation directory"
                 echo "  --api-key KEY       Anthropic API key"
                 echo "  --api-url URL       Custom API URL"
+                echo "  --admin-user USER   Admin username"
+                echo "  --admin-password PASS  Admin password"
                 echo "  --skip-deps         Skip dependency installation"
                 echo "  --skip-firewall     Skip firewall configuration"
                 echo "  --skip-ssl          Skip SSL certificate request"
@@ -854,12 +956,9 @@ main() {
     fi
 
     create_systemd_service
-
-    if [ -n "$DOMAIN" ]; then
-        configure_domain_ssl
-    fi
-
+    configure_domain_ssl
     start_services
+    run_post_install
     print_summary
 }
 
