@@ -243,7 +243,7 @@ pub async fn list_directory_contents(
 
             (StatusCode::OK, Json(ApiResponse::<Vec<FileEntry>>::success(files)))
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<FileEntry>>::error(e.to_string()))),
     }
 }
 
@@ -257,7 +257,7 @@ pub async fn search_files(
 
     search_files_recursive(base_path, &query, &mut results, &mut visited, 5, 50);
 
-    (StatusCode::OK, Json(results))
+    (StatusCode::OK, Json(ApiResponse::<Vec<FileEntry>>::success(results)))
 }
 
 fn search_files_recursive(
