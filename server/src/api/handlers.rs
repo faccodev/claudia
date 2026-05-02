@@ -174,7 +174,7 @@ pub async fn get_project_sessions(
 
     let sessions = get_project_sessions_list(&sessions_dir);
 
-    (StatusCode::OK, Json(sessions))
+    (StatusCode::OK, Json(ApiResponse::success(sessions)))
 }
 
 pub async fn load_session_history(
@@ -192,8 +192,8 @@ pub async fn load_session_history(
     }
 
     match std::fs::read_to_string(&session_file) {
-        Ok(content) => (StatusCode::OK, Json(content)),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<()>::error("Failed to read session".to_string()))),
+        Ok(content) => (StatusCode::OK, Json(ApiResponse::success(content))),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error("Failed to read session".to_string()))),
     }
 }
 
@@ -440,7 +440,7 @@ pub async fn get_system_prompt(
 ) -> impl IntoResponse {
     let claude_md = state.claude_dir.join("CLAUDE.md");
     let content = std::fs::read_to_string(&claude_md).unwrap_or_default();
-    (StatusCode::OK, Json(content))
+    (StatusCode::OK, Json(ApiResponse::success(content)))
 }
 
 pub async fn save_system_prompt(
@@ -524,8 +524,8 @@ pub async fn read_claude_md_file(
     let path = params.get("path").map(|p| p.as_str()).unwrap_or("");
 
     match std::fs::read_to_string(path) {
-        Ok(content) => (StatusCode::OK, Json(content)),
-        Err(e) => (StatusCode::NOT_FOUND, Json(ApiResponse::<()>::error(e.to_string()))),
+        Ok(content) => (StatusCode::OK, Json(ApiResponse::success(content))),
+        Err(e) => (StatusCode::NOT_FOUND, Json(ApiResponse::<String>::error(e.to_string()))),
     }
 }
 
@@ -958,10 +958,10 @@ pub async fn get_session_output(
     if let Some(session_id) = session_id {
         let jsonl_path = state.claude_dir.join("projects").join("_runs").join(&session_id);
         let content = std::fs::read_to_string(&jsonl_path).unwrap_or_default();
-        return (StatusCode::OK, Json(content));
+        return (StatusCode::OK, Json(ApiResponse::success(content)));
     }
 
-    (StatusCode::OK, Json(String::new()))
+    (StatusCode::OK, Json(ApiResponse::success(String::new())))
 }
 
 pub async fn get_live_session_output(
@@ -1006,11 +1006,11 @@ pub async fn fetch_github_agent_content(
     match client.get(url).header("User-Agent", "claudia-server").send().await {
         Ok(response) => {
             match response.text().await {
-                Ok(content) => (StatusCode::OK, Json(content)),
-                Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(String::new())),
+                Ok(content) => (StatusCode::OK, Json(ApiResponse::success(content))),
+                Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error("Failed to read response".to_string()))),
             }
         }
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(String::new())),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error("Request failed".to_string()))),
     }
 }
 
