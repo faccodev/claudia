@@ -855,8 +855,6 @@ pub async fn get_agent_run_with_metrics(
     };
     (StatusCode::OK, Json(response))
 }
-    }
-}
 
 pub async fn list_running_sessions(
     State(state): State<Arc<AppState>>,
