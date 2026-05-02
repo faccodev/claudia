@@ -37,9 +37,10 @@ pub async fn login(
         )
         .ok();
 
+    let auth = AuthService::new(&crate::auth::get_jwt_secret());
+
     match user {
         Some((id, username, password_hash)) => {
-            let auth = AuthService::new(&crate::auth::get_jwt_secret());
             if auth.verify_password(&req.password, &password_hash).unwrap_or(false) {
                 let token = auth.create_token(&id.to_string(), 24).unwrap_or_default();
                 (StatusCode::OK, Json(AuthResponse {
@@ -47,10 +48,16 @@ pub async fn login(
                     user: UserInfo { id, username },
                 }))
             } else {
-                (StatusCode::UNAUTHORIZED, Json(ApiResponse::<()>::error("Invalid credentials".to_string())))
+                (StatusCode::UNAUTHORIZED, Json(AuthResponse {
+                    token: String::new(),
+                    user: UserInfo { id: 0, username: String::new() },
+                }))
             }
         }
-        None => (StatusCode::UNAUTHORIZED, Json(ApiResponse::<()>::error("Invalid credentials".to_string()))),
+        None => (StatusCode::UNAUTHORIZED, Json(AuthResponse {
+            token: String::new(),
+            user: UserInfo { id: 0, username: String::new() },
+        })),
     }
 }
 
@@ -63,7 +70,10 @@ pub async fn register(
     let auth = AuthService::new(&crate::auth::get_jwt_secret());
     let password_hash = match auth.hash_password(&req.password) {
         Ok(hash) => hash,
-        Err(e) => return (StatusCode::BAD_REQUEST, Json(ApiResponse::<()>::error(e))),
+        Err(e) => return (StatusCode::BAD_REQUEST, Json(AuthResponse {
+            token: String::new(),
+            user: UserInfo { id: 0, username: String::new() },
+        })),
     };
 
     let db = state.db.lock().unwrap();
@@ -81,7 +91,10 @@ pub async fn register(
                 user: UserInfo { id: user_id, username: req.username },
             }))
         }
-        Err(_) => (StatusCode::CONFLICT, Json(ApiResponse::<()>::error("Username already exists".to_string()))),
+        Err(_) => (StatusCode::CONFLICT, Json(AuthResponse {
+            token: String::new(),
+            user: UserInfo { id: 0, username: String::new() },
+        })),
     }
 }
 
