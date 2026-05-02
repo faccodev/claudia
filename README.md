@@ -2,19 +2,19 @@
   <img src="https://github.com/user-attachments/assets/92fd93ed-e71b-4b94-b270-50684323dd00" alt="Claudia Logo" width="120" height="120">
 
   <h1>Claudia</h1>
-  
+
   <p>
-    <strong>A powerful GUI app and Toolkit for Claude Code</strong>
+    <strong>Powerful GUI + Web Interface for Claude Code</strong>
   </p>
   <p>
-    <strong>Create custom agents, manage interactive Claude Code sessions, run secure background agents, and more.</strong>
+    Use Claudia as a <strong>desktop app</strong> or deploy on a <strong>VPS</strong> and access via browser from anywhere.
   </p>
-  
+
   <p>
     <a href="#features"><img src="https://img.shields.io/badge/Features-✨-blue?style=for-the-badge" alt="Features"></a>
-    <a href="#installation"><img src="https://img.shields.io/badge/Install-🚀-green?style=for-the-badge" alt="Installation"></a>
-    <a href="#usage"><img src="https://img.shields.io/badge/Usage-📖-purple?style=for-the-badge" alt="Usage"></a>
-    <a href="#development"><img src="https://img.shields.io/badge/Develop-🛠️-orange?style=for-the-badge" alt="Development"></a>
+    <a href="#desktop-version"><img src="https://img.shields.io/badge/Desktop-🖥️-green?style=for-the-badge" alt="Desktop"></a>
+    <a href="#server-vps-version"><img src="https://img.shields.io/badge/Server/VPS-🌐-orange?style=for-the-badge" alt="Server"></a>
+    <a href="#development"><img src="https://img.shields.io/badge/Develop-🛠️-purple?style=for-the-badge" alt="Development"></a>
   </p>
 </div>
 
@@ -22,39 +22,51 @@
 
 https://github.com/user-attachments/assets/bf0bdf9d-ba91-45af-9ac4-7274f57075cf
 
+## 🌟 Two Ways to Use Claudia
+
+| Desktop App | Server/VPS |
+|------------|------------|
+| Run locally on your machine | Deploy on a VPS and access via browser |
+| Native desktop experience | Access from any device, anywhere |
+| Perfect for local development | Share with your team or access remotely |
+| All data stored locally | Data stored on server |
+
 > [!TIP]
 > **⭐ Star the repo and follow [@getAsterisk](https://x.com/getAsterisk) on X for early access to `asteria-swe-v0`**.
 
 ## 🌟 Overview
 
-**Claudia** is a powerful desktop application that transforms how you interact with Claude Code. Built with Tauri 2, it provides a beautiful GUI for managing your Claude Code sessions, creating custom agents, tracking usage, and much more.
+**Claudia** transforms how you interact with Claude Code - whether you prefer a native desktop app or accessing it from anywhere via web browser.
 
-Think of Claudia as your command center for Claude Code - bridging the gap between the command-line tool and a visual experience that makes AI-assisted development more intuitive and productive.
+- **Desktop Version**: Built with Tauri 2 for a native, fast experience
+- **Server Version**: Deploy on any VPS with nginx, SSL, and auto-start
 
-## 📋 Table of Contents
+Both versions share the same powerful features: custom agents, session management, usage analytics, MCP server management, and timeline checkpoints.
 
-- [🌟 Overview](#-overview)
-- [✨ Features](#-features)
-  - [🗂️ Project & Session Management](#️-project--session-management)
-  - [🤖 CC Agents](#-cc-agents)
-  
-  - [📊 Usage Analytics Dashboard](#-usage-analytics-dashboard)
-  - [🔌 MCP Server Management](#-mcp-server-management)
-  - [⏰ Timeline & Checkpoints](#-timeline--checkpoints)
-  - [📝 CLAUDE.md Management](#-claudemd-management)
-- [📖 Usage](#-usage)
-  - [Getting Started](#getting-started)
-  - [Managing Projects](#managing-projects)
-  - [Creating Agents](#creating-agents)
-  - [Tracking Usage](#tracking-usage)
-  - [Working with MCP Servers](#working-with-mcp-servers)
-- [🚀 Installation](#-installation)
-- [🔨 Build from Source](#-build-from-source)
-- [🛠️ Development](#️-development)
-- [🔒 Security](#-security)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
-- [🙏 Acknowledgments](#-acknowledgments)
+---
+
+## 🚀 Quick Start
+
+### Desktop (5 minutes)
+
+```bash
+git clone https://github.com/faccodev/claudia.git
+cd claudia
+bun install
+bun run tauri dev
+```
+
+### Server/VPS (one command)
+
+```bash
+curl -sL https://raw.githubusercontent.com/faccodev/claudia/main/server/install.sh | bash -s -- \
+  --domain your-domain.com \
+  --api-key sk-ant-xxxxx \
+  --admin-user admin \
+  --admin-password yourPassword123
+```
+
+---
 
 ## ✨ Features
 
@@ -69,8 +81,6 @@ Think of Claudia as your command center for Claude Code - bridging the gap betwe
 - **Agent Library**: Build a collection of purpose-built agents for different tasks
 - **Background Execution**: Run agents in separate processes for non-blocking operations
 - **Execution History**: Track all agent runs with detailed logs and performance metrics
-
-
 
 ### 📊 **Usage Analytics Dashboard**
 - **Cost Tracking**: Monitor your Claude API usage and costs in real-time
@@ -97,280 +107,217 @@ Think of Claudia as your command center for Claude Code - bridging the gap betwe
 - **Project Scanner**: Find all CLAUDE.md files in your projects
 - **Syntax Highlighting**: Full markdown support with syntax highlighting
 
-## 📖 Usage
+---
 
-### Getting Started
-
-1. **Launch Claudia**: Open the application after installation
-2. **Welcome Screen**: Choose between CC Agents or CC Projects
-3. **First Time Setup**: Claudia will automatically detect your `~/.claude` directory
-
-### Managing Projects
-
-```
-CC Projects → Select Project → View Sessions → Resume or Start New
-```
-
-- Click on any project to view its sessions
-- Each session shows the first message and timestamp
-- Resume sessions directly or start new ones
-
-### Creating Agents
-
-```
-CC Agents → Create Agent → Configure → Execute
-```
-
-1. **Design Your Agent**: Set name, icon, and system prompt
-2. **Configure Model**: Choose between available Claude models
-3. **Set Permissions**: Configure file read/write and network access
-4. **Execute Tasks**: Run your agent on any project
-
-### Tracking Usage
-
-```
-Menu → Usage Dashboard → View Analytics
-```
-
-- Monitor costs by model, project, and date
-- Export data for reports
-- Set up usage alerts (coming soon)
-
-### Working with MCP Servers
-
-```
-Menu → MCP Manager → Add Server → Configure
-```
-
-- Add servers manually or via JSON
-- Import from Claude Desktop configuration
-- Test connections before using
-
-## 🚀 Installation
+## 🖥️ Desktop Version
 
 ### Prerequisites
 
 - **Claude Code CLI**: Install from [Claude's official site](https://claude.ai/code)
+- **Rust** (1.70.0 or later)
+- **Bun** (latest version)
 
-### Release Executables Will Be Published Soon
+### Build from Source
 
-## 🔨 Build from Source
+```bash
+# Clone the repository
+git clone https://github.com/faccodev/claudia.git
+cd claudia
 
-### Prerequisites
+# Install dependencies
+bun install
 
-Before building Claudia from source, ensure you have the following installed:
+# Run in development mode
+bun run tauri dev
 
-#### System Requirements
+# Build for production
+bun run tauri build
+```
 
-- **Operating System**: Windows 10/11, macOS 11+, or Linux (Ubuntu 20.04+)
-- **RAM**: Minimum 4GB (8GB recommended)
-- **Storage**: At least 1GB free space
-
-#### Required Tools
-
-1. **Rust** (1.70.0 or later)
-   ```bash
-   # Install via rustup
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-
-2. **Bun** (latest version)
-   ```bash
-   # Install bun
-   curl -fsSL https://bun.sh/install | bash
-   ```
-
-3. **Git**
-   ```bash
-   # Usually pre-installed, but if not:
-   # Ubuntu/Debian: sudo apt install git
-   # macOS: brew install git
-   # Windows: Download from https://git-scm.com
-   ```
-
-4. **Claude Code CLI**
-   - Download and install from [Claude's official site](https://claude.ai/code)
-   - Ensure `claude` is available in your PATH
-
-#### Platform-Specific Dependencies
+### System Dependencies
 
 **Linux (Ubuntu/Debian)**
 ```bash
-# Install system dependencies
-sudo apt update
-sudo apt install -y \
+sudo apt update && sudo apt install -y \
   libwebkit2gtk-4.1-dev \
   libgtk-3-dev \
   libayatana-appindicator3-dev \
   librsvg2-dev \
-  patchelf \
   build-essential \
   curl \
   wget \
   file \
-  libssl-dev \
-  libxdo-dev \
-  libsoup-3.0-dev \
-  libjavascriptcoregtk-4.1-dev
+  libssl-dev
 ```
 
 **macOS**
 ```bash
-# Install Xcode Command Line Tools
 xcode-select --install
-
-# Install additional dependencies via Homebrew (optional)
-brew install pkg-config
 ```
 
-**Windows**
-- Install [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-- Install [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (usually pre-installed on Windows 11)
+---
 
-### Build Steps
+## 🌐 Server/VPS Version
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/getAsterisk/claudia.git
-   cd claudia
-   ```
+Claudia Server turns any VPS into a personal Claude Code web interface. Access from any browser!
 
-2. **Install Frontend Dependencies**
-   ```bash
-   bun install
-   ```
+### Features
 
-3. **Build the Application**
-   
-   **For Development (with hot reload)**
-   ```bash
-   bun run tauri dev
-   ```
-   
-   **For Production Build**
-   ```bash
-   # Build the application
-   bun run tauri build
-   
-   # The built executable will be in:
-   # - Linux: src-tauri/target/release/bundle/
-   # - macOS: src-tauri/target/release/bundle/
-   # - Windows: src-tauri/target/release/bundle/
-   ```
+- **nginx reverse proxy** with automatic SSL (Let's Encrypt)
+- **UFW/firewalld** firewall configuration
+- **Systemd service** with auto-start on reboot
+- **WebSocket support** for real-time agent output
+- **JWT authentication** with argon2 password hashing
+- **Full API** covering all Claudia features
 
-4. **Platform-Specific Build Options**
-   
-   **Debug Build (faster compilation, larger binary)**
-   ```bash
-   bun run tauri build --debug
-   ```
-   
-   **Build without bundling (creates just the executable)**
-   ```bash
-   bun run tauri build --no-bundle
-   ```
-   
-   **Universal Binary for macOS (Intel + Apple Silicon)**
-   ```bash
-   bun run tauri build --target universal-apple-darwin
-   ```
+### Installation
 
-### Troubleshooting
-
-#### Common Issues
-
-1. **"cargo not found" error**
-   - Ensure Rust is installed and `~/.cargo/bin` is in your PATH
-   - Run `source ~/.cargo/env` or restart your terminal
-
-2. **Linux: "webkit2gtk not found" error**
-   - Install the webkit2gtk development packages listed above
-   - On newer Ubuntu versions, you might need `libwebkit2gtk-4.0-dev`
-
-3. **Windows: "MSVC not found" error**
-   - Install Visual Studio Build Tools with C++ support
-   - Restart your terminal after installation
-
-4. **"claude command not found" error**
-   - Ensure Claude Code CLI is installed and in your PATH
-   - Test with `claude --version`
-
-5. **Build fails with "out of memory"**
-   - Try building with fewer parallel jobs: `cargo build -j 2`
-   - Close other applications to free up RAM
-
-#### Verify Your Build
-
-After building, you can verify the application works:
+#### Interactive Installation
 
 ```bash
-# Run the built executable directly
-# Linux/macOS
-./src-tauri/target/release/claudia
-
-# Windows
-./src-tauri/target/release/claudia.exe
+# SSH into your VPS and run:
+curl -sL https://raw.githubusercontent.com/faccodev/claudia/main/server/install.sh | bash
 ```
 
-### Build Artifacts
+The script will ask for:
+- Domain name (optional)
+- Anthropic API key
+- Admin username and password
 
-The build process creates several artifacts:
+#### Automated Installation
 
-- **Executable**: The main Claudia application
-- **Installers** (when using `tauri build`):
-  - `.deb` package (Linux)
-  - `.AppImage` (Linux)
-  - `.dmg` installer (macOS)
-  - `.msi` installer (Windows)
-  - `.exe` installer (Windows)
+```bash
+curl -sL https://raw.githubusercontent.com/faccodev/claudia/main/server/install.sh | bash -s -- \
+  --domain claude.example.com \
+  --api-key sk-ant-api03-xxxxx \
+  --admin-user admin \
+  --admin-password MySecurePassword123
+```
 
-All artifacts are located in `src-tauri/target/release/bundle/`.
+#### Full Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--domain` | Domain for nginx + SSL | - |
+| `--port` | Server port | 3000 |
+| `--api-key` | Anthropic API key | - |
+| `--api-url` | Custom API URL (for proxies) | api.anthropic.com |
+| `--admin-user` | Admin username | admin |
+| `--admin-password` | Admin password | (random) |
+| `--dir` | Installation directory | ~/claudia-server |
+| `--skip-deps` | Skip dependency installation | false |
+| `--skip-firewall` | Skip firewall setup | false |
+| `--skip-ssl` | Skip SSL certificate | false |
+
+### After Installation
+
+```bash
+# Check service status
+sudo systemctl status claudia-server
+
+# View logs
+sudo journalctl -u claudia-server -f
+
+# Restart service
+sudo systemctl restart claudia-server
+
+# Stop/Start
+sudo systemctl stop claudia-server
+sudo systemctl start claudia-server
+```
+
+### Access URLs
+
+| Setup | URL |
+|-------|-----|
+| With domain + SSL | `https://your-domain.com` |
+| IP only (no domain) | `http://YOUR_VPS_IP:3000` |
+
+### Environment Variables
+
+Located at `~/claudia-server/.env`:
+
+```bash
+CLAUDIA_PORT=3000
+CLAUDIA_HOST=127.0.0.1
+CLAUDIA_JWT_SECRET=your-secret-key
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+ANTHROPIC_API_URL=https://api.anthropic.com
+RUST_LOG=info
+```
+
+### Uninstallation
+
+```bash
+# Stop and disable service
+sudo systemctl stop claudia-server
+sudo systemctl disable claudia-server
+
+# Remove service file
+sudo rm /etc/systemd/system/claudia-server.service
+sudo systemctl daemon-reload
+
+# Remove installation directory
+rm -rf ~/claudia-server
+
+# Remove nginx config (optional)
+sudo rm /etc/nginx/sites-available/claudia-server
+sudo rm /etc/nginx/sites-enabled/claudia-server
+sudo systemctl reload nginx
+```
+
+---
 
 ## 🛠️ Development
 
 ### Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite 6
-- **Backend**: Rust with Tauri 2
-- **UI Framework**: Tailwind CSS v4 + shadcn/ui
-- **Database**: SQLite (via rusqlite)
-- **Package Manager**: Bun
+| Layer | Desktop | Server |
+|-------|---------|--------|
+| Frontend | React 18 + TypeScript + Vite | Same React (build for web) |
+| Backend | Rust + Tauri 2 | Rust + Axum |
+| Database | SQLite (rusqlite) | SQLite (rusqlite) |
+| UI | Tailwind CSS v4 + shadcn/ui | Same |
+| Auth | Tauri security model | JWT + argon2 |
 
 ### Project Structure
 
 ```
 claudia/
-├── src/                   # React frontend
+├── src/                   # React frontend (shared)
 │   ├── components/        # UI components
-│   ├── lib/               # API client & utilities
-│   └── assets/            # Static assets
-├── src-tauri/             # Rust backend
-│   ├── src/
-│   │   ├── commands/      # Tauri command handlers
-│   │   ├── checkpoint/    # Timeline management
-│   │   └── process/       # Process management
-│   └── tests/             # Rust test suite
-└── public/                # Public assets
+│   ├── lib/               # API clients (tauri + web)
+│   └── lib/web-api.ts     # Web API client for server
+├── src-tauri/             # Desktop backend (Tauri/Rust)
+│   └── src/
+│       ├── commands/      # Tauri commands
+│       └── main.rs
+├── server/                # Server backend (Axum/Rust)
+│   ├── Cargo.toml
+│   ├── install.sh          # VPS installation script
+│   └── src/
+│       ├── main.rs        # Axum server
+│       ├── api/           # REST API handlers
+│       ├── auth.rs        # JWT authentication
+│       └── state.rs       # App state
+└── public/                # Static assets
 ```
 
 ### Development Commands
 
 ```bash
-# Start development server
+# Desktop development
 bun run tauri dev
 
-# Run frontend only
-bun run dev
+# Server development
+cd server
+cargo run
 
-# Type checking
-bunx tsc --noEmit
-
-# Run Rust tests
-cd src-tauri && cargo test
-
-# Format code
-cd src-tauri && cargo fmt
+# Frontend only (web mode)
+VITE_API_URL=http://localhost:3000 bun run dev
 ```
+
+---
 
 ## 🔒 Security
 
@@ -378,9 +325,13 @@ Claudia prioritizes your privacy and security:
 
 1. **Process Isolation**: Agents run in separate processes
 2. **Permission Control**: Configure file and network access per agent
-3. **Local Storage**: All data stays on your machine
+3. **Local Storage (Desktop)**: All data stays on your machine
 4. **No Telemetry**: No data collection or tracking
 5. **Open Source**: Full transparency through open source code
+6. **SSL/TLS**: Automatic HTTPS on server deployment
+7. **JWT Auth**: Secure token-based authentication
+
+---
 
 ## 🤝 Contributing
 
@@ -395,13 +346,18 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - 🧪 Test coverage
 - 🌐 Internationalization
 
+---
+
 ## 📄 License
 
 This project is licensed under the AGPL License - see the [LICENSE](LICENSE) file for details.
 
+---
+
 ## 🙏 Acknowledgments
 
 - Built with [Tauri](https://tauri.app/) - The secure framework for building desktop apps
+- Server powered by [Axum](https://github.com/tokio-rs/axum)
 - [Claude](https://claude.ai) by Anthropic
 
 ---
@@ -411,13 +367,12 @@ This project is licensed under the AGPL License - see the [LICENSE](LICENSE) fil
     <strong>Made with ❤️ by the <a href="https://asterisk.so/">Asterisk</a></strong>
   </p>
   <p>
-    <a href="https://github.com/getAsterisk/claudia/issues">Report Bug</a>
+    <a href="https://github.com/faccodev/claudia/issues">Report Bug</a>
     ·
-    <a href="https://github.com/getAsterisk/claudia/issues">Request Feature</a>
+    <a href="https://github.com/faccodev/claudia/issues">Request Feature</a>
   </p>
 </div>
 
-
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=getAsterisk/claudia&type=Date)](https://www.star-history.com/#getAsterisk/claudia&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=faccodev/claudia&type=Date)](https://www.star-history.com/#faccodev/claudia&Date)
