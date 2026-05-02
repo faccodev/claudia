@@ -678,7 +678,7 @@ pub async fn export_agent(
         },
     };
 
-    (StatusCode::OK, Json(ApiResponse::<String>::success(serde_json::to_string(&export).unwrap_or_default())))
+    (StatusCode::OK, Json(ApiResponse::<AgentExport>::success(export)))
 }
 
 pub async fn import_agent(
@@ -722,7 +722,7 @@ pub async fn execute_agent(
 ) -> impl IntoResponse {
     let agent = get_agent_by_id(&state, agent_id).await;
     if agent.id.is_none() {
-        return (StatusCode::NOT_FOUND, Json(ApiResponse::<AgentRun>::error("Agent not found".to_string())));
+        return (StatusCode::NOT_FOUND, Json(ApiResponse::<ExecuteRunResponse>::error("Agent not found".to_string())));
     }
 
     // Create agent run record
@@ -741,7 +741,7 @@ pub async fn execute_agent(
             let db = state.db.lock().unwrap();
             db.last_insert_rowid()
         }
-        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<i64>::error(e.to_string()))),
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<ExecuteRunResponse>::error(e.to_string()))),
     };
 
     // Spawn the agent process
@@ -892,7 +892,7 @@ pub async fn kill_agent_session(
     let pid: Option<u32> = db.query_row(
         "SELECT pid FROM agent_runs WHERE id = ?",
         [run_id],
-        |row| row.get::<_, Option<u32>>(0).ok().flatten(),
+        |row| row.get::<_, Option<u32>>(0),
     ).ok().flatten();
 
     drop(db);
