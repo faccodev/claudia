@@ -431,7 +431,7 @@ pub async fn save_claude_settings(
             Ok(_) => (StatusCode::OK, Json(ApiMessage::new("Settings saved"))),
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to save settings: {}", e)))),
         },
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to serialize settings: {}", e)))),
     }
 }
 
@@ -818,7 +818,6 @@ pub async fn get_agent_run(
 }
 
 pub async fn get_agent_run_with_metrics(
-    Path(run_id): Path<i64>,
     Path(run_id): Path<i64>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {

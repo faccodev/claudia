@@ -65,7 +65,7 @@ pub fn routes(state: Arc<crate::state::AppState>) -> Router {
         .route("/agents/:id/execute", axum::routing::post(execute_agent))
         .route("/agents/:id/runs", axum::routing::get(list_agent_runs))
         .route("/runs/:id", axum::routing::get(get_agent_run))
-        .route("/runs/:id/realtime", axum::routing::get(get_agent_run_with_real_time_metrics))
+        .route("/runs/:id/realtime", axum::routing::get(get_agent_run_with_metrics))
         .route("/runs", axum::routing::get(list_running_sessions))
         .route("/runs/:id/kill", axum::routing::post(kill_agent_session))
         .route("/runs/:id/status", axum::routing::get(get_session_status))
