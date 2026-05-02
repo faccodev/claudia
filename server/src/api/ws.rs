@@ -4,6 +4,7 @@ use axum::{
 };
 use futures_util::{SinkExt, StreamExt};
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
@@ -24,14 +25,14 @@ async fn handle_socket(
 ) {
     let (sender, receiver) = socket.split();
 
-    // Wrap sender in Arc for sharing across tasks
-    let sender = Arc::new(std::sync::Mutex::new(sender));
+    // Wrap sender in Arc<Mutex> for sharing across tasks - tokio::sync::Mutex is Send
+    let sender = Arc::new(Mutex::new(sender));
     let run_id_clone = run_id;
     let session_id_clone = session_id.clone();
 
     // Send initial connection message
     {
-        let sender = sender.lock().unwrap();
+        let mut sender = sender.lock().await;
         let _ = sender.send(axum::extract::ws::Message::Text(
             serde_json::json!({
                 "type": "connected",
@@ -45,7 +46,6 @@ async fn handle_socket(
 
     // Spawn task to handle incoming messages
     let sender_reader = sender.clone();
-    let state_for_reader = state.clone();
     tokio::spawn(async move {
         let mut receiver = receiver;
         while let Some(msg) = receiver.next().await {
@@ -54,7 +54,7 @@ async fn handle_socket(
                     if json.get("type").and_then(|t| t.as_str()) == Some("subscribe") {
                         let run_id = json.get("run_id").and_then(|r| r.as_i64());
                         let session_id = json.get("session_id").and_then(|s| s.as_str());
-                        let sender = sender_reader.lock().unwrap();
+                        let mut sender = sender_reader.lock().await;
                         let _ = sender.send(axum::extract::ws::Message::Text(
                             serde_json::json!({
                                 "type": "subscribed",
@@ -81,7 +81,7 @@ async fn handle_socket(
                 // Get live output
                 let output = state_for_poll.process_registry.get_live_output(run_id).await;
                 if !output.is_empty() {
-                    let sender = sender_poll.lock().unwrap();
+                    let mut sender = sender_poll.lock().await;
                     let _ = sender.send(axum::extract::ws::Message::Text(
                         serde_json::json!({
                             "type": "output",
@@ -105,7 +105,7 @@ async fn handle_socket(
 
                 if let Some(status) = status {
                     if status == "completed" || status == "failed" || status == "cancelled" {
-                        let sender = sender_poll.lock().unwrap();
+                        let mut sender = sender_poll.lock().await;
                         let _ = sender.send(axum::extract::ws::Message::Text(
                             serde_json::json!({
                                 "type": "complete",
@@ -128,7 +128,7 @@ async fn handle_socket(
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-                let sender = sender_poll.lock().unwrap();
+                let mut sender = sender_poll.lock().await;
                 let _ = sender.send(axum::extract::ws::Message::Text(
                     serde_json::json!({
                         "type": "heartbeat"

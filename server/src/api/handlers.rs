@@ -947,7 +947,7 @@ pub async fn get_session_output(
         db.query_row(
             "SELECT session_id, status FROM agent_runs WHERE id = ?",
             [run_id],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+            |row| Ok((row.get::<_, Option<String>>(0)?, row.get::<_, Option<String>>(1)?)),
         ).ok().unwrap_or((None, None))
     };
 
