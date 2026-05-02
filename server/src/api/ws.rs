@@ -22,35 +22,39 @@ async fn handle_socket(
     run_id: Option<i64>,
     session_id: Option<String>,
 ) {
-    let (mut sender, mut receiver) = socket.split();
+    let (sender, receiver) = socket.split();
 
-    // Register for events
-    let session_clone = state.clone();
+    // Wrap sender in Arc for sharing across tasks
+    let sender = Arc::new(std::sync::Mutex::new(sender));
     let run_id_clone = run_id;
     let session_id_clone = session_id.clone();
 
     // Send initial connection message
-    let _ = sender.send(axum::extract::ws::Message::Text(
-        serde_json::json!({
-            "type": "connected",
-            "run_id": run_id_clone,
-            "session_id": session_id_clone
-        })
-        .to_string()
-        .into(),
-    )).await;
+    {
+        let sender = sender.lock().unwrap();
+        let _ = sender.send(axum::extract::ws::Message::Text(
+            serde_json::json!({
+                "type": "connected",
+                "run_id": run_id_clone,
+                "session_id": session_id_clone
+            })
+            .to_string()
+            .into(),
+        )).await;
+    }
 
     // Spawn task to handle incoming messages
+    let sender_reader = sender.clone();
     let state_for_reader = state.clone();
     tokio::spawn(async move {
+        let mut receiver = receiver;
         while let Some(msg) = receiver.next().await {
             if let Ok(axum::extract::ws::Message::Text(text)) = msg {
                 if let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) {
-                    // Handle client messages (e.g., subscribe to events)
                     if json.get("type").and_then(|t| t.as_str()) == Some("subscribe") {
                         let run_id = json.get("run_id").and_then(|r| r.as_i64());
                         let session_id = json.get("session_id").and_then(|s| s.as_str());
-                        // TODO: Register subscription
+                        let sender = sender_reader.lock().unwrap();
                         let _ = sender.send(axum::extract::ws::Message::Text(
                             serde_json::json!({
                                 "type": "subscribed",
@@ -68,6 +72,7 @@ async fn handle_socket(
 
     // Poll for live output if run_id is specified
     if let Some(run_id) = run_id {
+        let sender_poll = sender.clone();
         let state_for_poll = state.clone();
         tokio::spawn(async move {
             loop {
@@ -76,6 +81,7 @@ async fn handle_socket(
                 // Get live output
                 let output = state_for_poll.process_registry.get_live_output(run_id).await;
                 if !output.is_empty() {
+                    let sender = sender_poll.lock().unwrap();
                     let _ = sender.send(axum::extract::ws::Message::Text(
                         serde_json::json!({
                             "type": "output",
@@ -99,6 +105,7 @@ async fn handle_socket(
 
                 if let Some(status) = status {
                     if status == "completed" || status == "failed" || status == "cancelled" {
+                        let sender = sender_poll.lock().unwrap();
                         let _ = sender.send(axum::extract::ws::Message::Text(
                             serde_json::json!({
                                 "type": "complete",
@@ -116,14 +123,12 @@ async fn handle_socket(
     }
 
     // Poll for Claude session output if session_id is specified
-    if let Some(session_id) = session_id {
-        let state_for_poll = state.clone();
+    if session_id.is_some() {
+        let sender_poll = sender.clone();
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-
-                // TODO: Get Claude session output from process registry
-
+                let sender = sender_poll.lock().unwrap();
                 let _ = sender.send(axum::extract::ws::Message::Text(
                     serde_json::json!({
                         "type": "heartbeat"

@@ -942,12 +942,12 @@ pub async fn get_session_output(
     Path(run_id): Path<i64>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
-    let (session_id, status) = {
+    let (session_id, status): (Option<String>, Option<String>) = {
         let db = state.db.lock().unwrap();
         db.query_row(
             "SELECT session_id, status FROM agent_runs WHERE id = ?",
             [run_id],
-            |row| Ok((row.get(0)?, row.get(1)?)),
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
         ).ok().unwrap_or((None, None))
     };
 
