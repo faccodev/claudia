@@ -951,14 +951,14 @@ pub async fn get_session_output(
     if status.as_ref().map(|s| s == "running").unwrap_or(false) {
         // Get from live output buffer
         let output = state.process_registry.get_live_output(run_id).await;
-        return (StatusCode::OK, Json(output));
+        return (StatusCode::OK, Json(ApiResponse::success(output)));
     }
 
     // Read from JSONL file
     if let Some(session_id) = session_id {
         let jsonl_path = state.claude_dir.join("projects").join("_runs").join(&session_id);
         let content = std::fs::read_to_string(&jsonl_path).unwrap_or_default();
-        return (StatusCode::OK, Json(ApiResponse::<String>::success(content)));
+        return (StatusCode::OK, Json(ApiResponse::success(content)));
     }
 
     (StatusCode::OK, Json(ApiResponse::<String>::success(String::new())))
