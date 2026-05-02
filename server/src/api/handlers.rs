@@ -844,6 +844,7 @@ pub async fn get_agent_run_with_metrics(
 
     match run {
         Some(r) => {
+            drop(db);
             let metrics = calculate_run_metrics(&state, run_id).await;
             (StatusCode::OK, Json(ApiResponse::success(AgentRunWithMetrics { run: r, metrics, output: None })))
         }
@@ -941,12 +942,14 @@ pub async fn get_session_output(
     Path(run_id): Path<i64>,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
-    let db = state.db.lock().unwrap();
-    let (session_id, status): (Option<String>, Option<String>) = db.query_row(
-        "SELECT session_id, status FROM agent_runs WHERE id = ?",
-        [run_id],
-        |row| Ok((row.get(0)?, row.get(1)?)),
-    ).ok().unwrap_or((None, None));
+    let (session_id, status) = {
+        let db = state.db.lock().unwrap();
+        db.query_row(
+            "SELECT session_id, status FROM agent_runs WHERE id = ?",
+            [run_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        ).ok().unwrap_or((None, None))
+    };
 
     if status.as_ref().map(|s| s == "running").unwrap_or(false) {
         // Get from live output buffer
