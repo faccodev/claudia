@@ -8,7 +8,7 @@ use std::net::SocketAddr;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
-use tracing_subscriber;
+use tracing_subscriber::fmt::format::FmtSpan;
 use tracing::info;
 
 #[tokio::main]
