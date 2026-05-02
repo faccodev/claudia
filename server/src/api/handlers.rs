@@ -548,10 +548,10 @@ pub async fn list_agents(
         "SELECT id, name, icon, system_prompt, default_task, model, enable_file_read, enable_file_write, enable_network, created_at, updated_at FROM agents ORDER BY name"
     ) {
         Ok(s) => s,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(Vec::<Agent>::new())),
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<Vec<Agent>>::error("Failed to prepare statement".to_string()))),
     };
 
-    let agents = stmt.query_map([], |row| {
+    let agents: Vec<Agent> = stmt.query_map([], |row| {
         Ok(Agent {
             id: Some(row.get(0)?),
             name: row.get(1)?,
@@ -567,7 +567,7 @@ pub async fn list_agents(
         })
     }).ok().map(|rows| rows.filter_map(|r| r.ok()).collect()).unwrap_or_default();
 
-    (StatusCode::OK, Json(agents))
+    (StatusCode::OK, Json(ApiResponse::success(agents)))
 }
 
 pub async fn create_agent(
