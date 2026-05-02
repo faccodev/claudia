@@ -515,7 +515,7 @@ pub async fn find_claude_md_files(
 
     find_claude_md_recursive(base_path, &mut files, 0);
 
-    (StatusCode::OK, Json(ApiResponse::<Vec<FileEntry>>::success(files)))
+    (StatusCode::OK, Json(ApiResponse::<Vec<ClaudeMdFile>>::success(files)))
 }
 
 pub async fn read_claude_md_file(
@@ -534,7 +534,7 @@ pub async fn save_claude_md_file(
 ) -> impl IntoResponse {
     match std::fs::write(&req.file_path, &req.content) {
         Ok(_) => (StatusCode::OK, Json(ApiMessage::new("File saved"))),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::<String>::error(e.to_string()))),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiMessage::new(format!("Failed to save file: {}", e)))),
     }
 }
 
